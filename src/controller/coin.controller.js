@@ -21,6 +21,7 @@ export const fetchStats = async (req, res, next) => {
     res.status(200).send({
       message: "Data fetched successfully",
       data: {
+        name: coin,
         price: stats.curPrice,
         marketCap: stats.marketCap,
         price_change_24h: stats.priceChange_24hr,
