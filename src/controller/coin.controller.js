@@ -17,23 +17,18 @@ export const fetchStats = async (req, res, next) => {
       });
     }
 
-    // extract valuable data from the response
-    const data = [];
-    stats.map(stat =>
-      data.push({
-        price: stat.curPrice,
-        marketCap: stat.marketCap,
-        price_change_24h: stat.priceChange_24hr,
-      })
-    );
-
     // send response
     res.status(200).send({
-      message: "Data stored successfully",
+      message: "Data fetched successfully",
+      data: {
+        price: stats.curPrice,
+        marketCap: stats.marketCap,
+        price_change_24h: stats.priceChange_24hr,
+      },
       success: true,
-      data,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).send({
       error: "Internal Server Error",
       success: false,
