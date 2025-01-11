@@ -2,15 +2,23 @@ import express from "express";
 import { config } from "dotenv";
 import { connectDB } from "./database.js";
 import coinRouter from "./src/routes/coin.route.js";
+
+// configure env file
 config({
   path: ".env",
 });
+
+// create server
 const app = express();
 
+// connect server with database
 connectDB;
+
+// uses json with express
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// create routes
 app.use("/coin", coinRouter);
 
 app.listen(process.env.PORT, () => {

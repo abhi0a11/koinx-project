@@ -2,16 +2,22 @@ import axios from "axios";
 import { Coin } from "../model/coin.model.js";
 import cron from "node-cron";
 
+// API to fetch the stats from DB
 export const fetchStats = async (req, res, next) => {
   try {
-    let { coin } = req.params;
-    coin = coin.trim().toLowerCase();
-    const stats = await Coin.find({ coin });
+    let { coin } = req.params; // extract coin name from parameter
+    coin = coin.trim().toLowerCase(); // normalise text
+    const stats = await Coin.findOne({ coin }); // searcch in db
 
-    if (stats.length == 0) {
-      return res.status(404).send({ error: "Coin not found", success: false });
+    if (!stats) {
+      // if coin is not present in database
+      return res.status(404).send({
+        error: "Coin not found",
+        success: false,
+      });
     }
 
+    // extract valuable data from the response
     const data = [];
     stats.map(stat =>
       data.push({
@@ -20,6 +26,8 @@ export const fetchStats = async (req, res, next) => {
         price_change_24h: stat.priceChange_24hr,
       })
     );
+
+    // send response
     res.status(200).send({
       message: "Data stored successfully",
       success: true,
@@ -33,10 +41,11 @@ export const fetchStats = async (req, res, next) => {
   }
 };
 
+//  API for standard deviation calculation of latest 100 records
 export const fetchStdDeviation = async (req, res) => {
   try {
-    let { coin } = req.params;
-    coin = coin.trim().toLowerCase();
+    let { coin } = req.params; // extract coin name from parameter
+    coin = coin.trim().toLowerCase(); // normalise text
 
     const result = await Coin.aggregate([
       // Match the specific coin by its 'coin' field
@@ -49,12 +58,13 @@ export const fetchStdDeviation = async (req, res) => {
       {
         $group: {
           _id: "$coin", // Group by 'coin' name
-          stdDev: { $stdDevPop: "$last100Prices" }, // Use $stdDevSamp if sample standard deviation is needed
+          stdDev: { $stdDevPop: "$last100Prices" },
           count: { $sum: 1 }, // To ensure sufficient data points
         },
       },
     ]);
 
+    // if coin is not found or array is empty
     if (!result || result.length === 0) {
       return res
         .status(404)
@@ -63,6 +73,7 @@ export const fetchStdDeviation = async (req, res) => {
 
     const { stdDev, count } = result[0];
 
+    // if there are not sufficient entries in the array to calculate std deviation
     if (count === 0) {
       return res.status(400).json({
         error:
@@ -70,6 +81,7 @@ export const fetchStdDeviation = async (req, res) => {
       });
     }
 
+    //  send response
     return res.json({
       coin: coin,
       standardDeviation: stdDev,
@@ -80,21 +92,25 @@ export const fetchStdDeviation = async (req, res) => {
   }
 };
 
+//  function to fetch coin data every 2 hour.
 async function fetchDataAndUpdateDB(coin) {
   try {
+    // fetch data from coingecko api endpoint
     const { data } = await axios.get(`${process.env.coinServer}/${coin}`, {
       withCredentials: true,
     });
     const price = data.market_data.current_price.usd;
     const marketCap = data.market_data.market_cap.usd;
     const pc24h = data.market_data.price_change_24h_in_currency.usd;
+
+    // update the database with latest proce
     let updateCoin = await Coin.findOneAndUpdate(
       { coin },
       {
         curPrice: price,
         marketCap: marketCap,
         priceChange_24hr: pc24h,
-        $push: { price_history: price },
+        $push: { price_history: price }, // push value in the array at end
       }
     );
   } catch (error) {
@@ -102,6 +118,7 @@ async function fetchDataAndUpdateDB(coin) {
   }
 }
 
+//  calls function every 2 hours
 cron.schedule("0 */2 * * *", () => fetchDataAndUpdateDB("bitcoin"));
 cron.schedule("0 */2 * * *", () => fetchDataAndUpdateDB("matic-network"));
 cron.schedule("0 */2 * * *", () => fetchDataAndUpdateDB("ethereum"));

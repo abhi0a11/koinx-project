@@ -4,6 +4,7 @@ import {
   fetchStdDeviation,
 } from "../controller/coin.controller.js";
 
+// ecpress router
 const router = express.Router();
 
 router.get("/:coin/stats", fetchStats);
