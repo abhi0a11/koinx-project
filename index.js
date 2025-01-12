@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // create routes
 app.use("/coin", coinRouter);
-
+app.get("/ping", (req, res) => res.status(200).send("server is alive!"));
 app.listen(process.env.PORT, () => {
   console.log(`server is running on port ${process.env.PORT}`);
 });

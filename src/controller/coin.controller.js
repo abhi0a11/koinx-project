@@ -114,7 +114,13 @@ async function fetchDataAndUpdateDB(coin) {
   }
 }
 
-const keepAliveFunc = () => {};
+const keepAliveFunc = async (req, res) => {
+  try {
+    await axios.get(`${process.env.server}/ping`);
+  } catch (error) {
+    res.status(500).send("Error");
+  }
+};
 //  calls function every 2 hours
 cron.schedule("0 */2 * * *", () => fetchDataAndUpdateDB("bitcoin"));
 cron.schedule("0 */2 * * *", () => fetchDataAndUpdateDB("matic-network"));
