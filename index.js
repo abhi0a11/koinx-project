@@ -23,12 +23,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/coin", coinRouter);
 
 // to keep server alive
-app.get("/ping", (req, res) => res.status(200).send("server is alive!"));
-cron.schedule("*/14 * * * *", async (req, res) => {
+app.get("/ping", (req, res) => {
+  res.status(200).send("server is alive!");
+});
+cron.schedule("*/14 * * * *", async () => {
   try {
-    await axios.get(`${process.env.server}/ping`);
+    await axios.get(`${process.env.BACKEND_URL}/ping`);
   } catch (error) {
-    res.send("Error");
+    console.error("Failed to ping server:", error.message);
   }
 });
 
